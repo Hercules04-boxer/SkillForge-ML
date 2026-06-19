@@ -17,6 +17,8 @@ export default function InterviewSetup() {
     objectives: '',
     numQs: 5,
     duration: 60, // seconds per question
+    difficulty: 'Mixed',
+    mode: 'audio',
   })
 
   const update = (field) => (e) => setConfig({ ...config, [field]: e.target.value })
@@ -38,7 +40,8 @@ export default function InterviewSetup() {
         body: JSON.stringify({
           interviewName: config.interviewName,
           objectives: config.objectives,
-          numQs: parseInt(config.numQs)
+          numQs: parseInt(config.numQs),
+          difficulty: config.difficulty
         })
       })
 
@@ -52,7 +55,8 @@ export default function InterviewSetup() {
             config: {
               ...config,
               numQs: parseInt(config.numQs),
-              duration: parseInt(config.duration)
+              duration: parseInt(config.duration),
+              mode: config.mode
             }
           }
         })
@@ -142,6 +146,26 @@ export default function InterviewSetup() {
               </div>
 
               <div className="input-group">
+                <label htmlFor="difficulty">
+                  <Target size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                  Difficulty Level
+                </label>
+                <div className="num-selector" style={{ marginBottom: '16px' }}>
+                  {['Easy', 'Moderate', 'Tough', 'Mixed'].map(d => (
+                    <button
+                      key={d}
+                      type="button"
+                      className={`num-option ${config.difficulty === d ? 'active' : ''}`}
+                      onClick={() => setConfig({ ...config, difficulty: d })}
+                      style={{ padding: '8px 12px', fontSize: '0.85rem', flex: 1 }}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="input-group">
                 <label htmlFor="numQs">
                   <Sparkles size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
                   Number of Questions
@@ -183,6 +207,31 @@ export default function InterviewSetup() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
+              <div className="input-group">
+                <label>
+                  <Target size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                  Interview Mode
+                </label>
+                <div className="time-selector">
+                  <button
+                    type="button"
+                    className={`time-option ${config.mode === 'audio' ? 'active' : ''}`}
+                    onClick={() => setConfig({ ...config, mode: 'audio' })}
+                    style={{ flex: 1 }}
+                  >
+                    Audio & Video
+                  </button>
+                  <button
+                    type="button"
+                    className={`time-option ${config.mode === 'text' ? 'active' : ''}`}
+                    onClick={() => setConfig({ ...config, mode: 'text' })}
+                    style={{ flex: 1 }}
+                  >
+                    Text Only
+                  </button>
+                </div>
+              </div>
+
               <div className="input-group">
                 <label>
                   <Clock size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />

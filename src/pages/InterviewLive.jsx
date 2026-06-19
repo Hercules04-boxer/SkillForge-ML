@@ -16,6 +16,7 @@ export default function InterviewLive() {
   const [phase, setPhase] = useState('ready') // ready, answering, evaluating, feedback
   const [currentFeedback, setCurrentFeedback] = useState(null)
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
+  const [textAnswer, setTextAnswer] = useState('')
 
   const webcamRef = useRef(null)
   const streamRef = useRef(null)
@@ -30,7 +31,7 @@ export default function InterviewLive() {
     }
   }, [questions, navigate])
 
-  // Start webcam
+  // Start webcam (available for all modes)
   useEffect(() => {
     const startWebcam = async () => {
       try {
@@ -106,33 +107,40 @@ export default function InterviewLive() {
   const handleStartAnswering = () => {
     setPhase('answering')
     setTimeLeft(config?.duration || 60)
-    startRecording()
+    if (config?.mode !== 'text') {
+      startRecording()
+    }
   }
 
   const handleSubmitAnswer = async () => {
     if (timerRef.current) clearInterval(timerRef.current)
     setPhase('evaluating')
 
-    const blob = await stopRecording()
-
     let transcription = ''
 
-    // Upload and transcribe
-    if (blob) {
-      try {
-        const formData = new FormData()
-        formData.append('audio', blob, 'interview_video.webm')
+    if (config?.mode === 'text') {
+      transcription = textAnswer.trim()
+      if (!transcription) transcription = 'No answer provided.'
+    } else {
+      const blob = await stopRecording()
 
-        const uploadRes = await fetch('/api/upload-audio', {
-          method: 'POST',
-          credentials: 'include',
-          body: formData
-        })
-        const uploadData = await uploadRes.json()
-        transcription = uploadData.transcription || ''
-      } catch (err) {
-        console.error('Upload error:', err)
-        transcription = 'Could not transcribe audio'
+      // Upload and transcribe
+      if (blob) {
+        try {
+          const formData = new FormData()
+          formData.append('audio', blob, 'interview_video.webm')
+
+          const uploadRes = await fetch('/api/upload-audio', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+          })
+          const uploadData = await uploadRes.json()
+          transcription = uploadData.transcription || ''
+        } catch (err) {
+          console.error('Upload error:', err)
+          transcription = 'Could not transcribe audio'
+        }
       }
     }
 
@@ -189,6 +197,7 @@ export default function InterviewLive() {
       setCurrentFeedback(null)
       setPhase('ready')
       setTimeLeft(config?.duration || 60)
+      setTextAnswer('')
     }
   }
 
@@ -262,7 +271,25 @@ export default function InterviewLive() {
 
                 <h2 className="question-text">{questions[currentIndex]}</h2>
 
-                {/* Timer */}
+                {/* Answer Area */}
+                {phase === 'answering' && config?.mode === 'text' && (
+                  <div className="text-answer-section" style={{ marginTop: '20px' }}>
+                    <div className="timer-text" style={{ marginBottom: '8px', color: isTimeLow ? 'var(--accent-red)' : 'var(--text-secondary)', fontWeight: 'bold' }}>
+                      <Clock size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                      Time Left: {timeLeft}s
+                    </div>
+                    <textarea
+                      className="input-field"
+                      rows={6}
+                      placeholder="Type your answer here..."
+                      value={textAnswer}
+                      onChange={e => setTextAnswer(e.target.value)}
+                      style={{ resize: 'vertical' }}
+                    />
+                  </div>
+                )}
+
+                {/* Timer (Audio) */}
                 {phase === 'answering' && (
                   <div className="timer-section">
                     <div className={`timer-ring ${isTimeLow ? 'low' : ''}`}>
@@ -327,10 +354,9 @@ export default function InterviewLive() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 <div className="feedback-score-section">
-                  <div className={`feedback-score ${
-                    currentFeedback.evaluation.score >= 7 ? 'high' :
-                    currentFeedback.evaluation.score >= 4 ? 'mid' : 'low'
-                  }`}>
+                  <div className={`feedback-score ${currentFeedback.evaluation.score >= 7 ? 'high' :
+                      currentFeedback.evaluation.score >= 4 ? 'mid' : 'low'
+                    }`}>
                     <span className="score-value">{currentFeedback.evaluation.score}</span>
                     <span className="score-max">/10</span>
                   </div>
@@ -375,6 +401,7 @@ export default function InterviewLive() {
           </AnimatePresence>
         </div>
 
+        {/* Webcam PiP */}
         {/* Webcam PiP */}
         <div className="webcam-pip">
           <video ref={webcamRef} autoPlay muted playsInline className="webcam-video" />
