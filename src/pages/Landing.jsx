@@ -58,11 +58,19 @@ export default function Landing() {
 
           <div className="hero-actions">
             {user ? (
-              <Link to="/interview">
-                <button className="btn btn-primary btn-lg hero-cta">
-                  Start Interview <ArrowRight size={18} />
-                </button>
-              </Link>
+              user.is_admin ? (
+                <Link to="/admin">
+                  <button className="btn btn-primary btn-lg hero-cta">
+                    Admin Dashboard <ArrowRight size={18} />
+                  </button>
+                </Link>
+              ) : (
+                <Link to="/interview">
+                  <button className="btn btn-primary btn-lg hero-cta">
+                    Start Interview <ArrowRight size={18} />
+                  </button>
+                </Link>
+              )
             ) : (
               <>
                 <Link to="/signup">
@@ -137,9 +145,9 @@ export default function Landing() {
         >
           <h2>Ready to Transform Your Interview Skills?</h2>
           <p>Join SkillsForge ML and experience AI-driven interview preparation like never before.</p>
-          <Link to={user ? "/interview" : "/signup"}>
+          <Link to={user ? (user.is_admin ? "/admin" : "/interview") : "/signup"}>
             <button className="btn btn-primary btn-lg">
-              {user ? 'Start an Interview' : 'Create Free Account'} <ArrowRight size={18} />
+              {user ? (user.is_admin ? 'Go to Admin Dashboard' : 'Start an Interview') : 'Create Free Account'} <ArrowRight size={18} />
             </button>
           </Link>
         </motion.div>

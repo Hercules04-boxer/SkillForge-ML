@@ -32,14 +32,13 @@ export default function Navbar() {
       </button>
 
       <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
-        <Link to="/about" className="nav-link" onClick={() => setMenuOpen(false)}>About</Link>
+        {(!user || !user.is_admin) && (
+          <Link to="/about" className="nav-link" onClick={() => setMenuOpen(false)}>About</Link>
+        )}
         {user ? (
           <>
-            <Link to="/interview" className="nav-link" onClick={() => setMenuOpen(false)}>Interview</Link>
-            {user.is_admin && (
-              <Link to="/admin" className="nav-link admin-link" onClick={() => setMenuOpen(false)}>
-                <Shield size={14} /> Admin
-              </Link>
+            {!user.is_admin && (
+              <Link to="/interview" className="nav-link" onClick={() => setMenuOpen(false)}>Interview</Link>
             )}
             <div className="nav-user">
               <User size={14} />

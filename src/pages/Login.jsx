@@ -23,7 +23,11 @@ export default function Login() {
     setLoading(false)
 
     if (result.success) {
-      navigate('/interview')
+      if (result.isAdmin) {
+        navigate('/admin')
+      } else {
+        navigate('/interview')
+      }
     } else {
       setError(result.error)
     }

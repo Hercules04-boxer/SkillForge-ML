@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
     const data = await res.json()
     if (res.ok) {
       setUser(data.user)
-      return { success: true, message: data.message }
+      return { success: true, message: data.message, isAdmin: data.user.is_admin }
     }
     return { success: false, error: data.error }
   }
