@@ -58,6 +58,9 @@ export default function AdminDashboard() {
       if (res.ok) {
         setEditingUser(null)
         fetchUsers()
+      } else {
+        const errorData = await res.json()
+        alert('Could not save changes: ' + errorData.error)
       }
     } catch (err) {
       console.error('Update error:', err)
@@ -120,6 +123,7 @@ export default function AdminDashboard() {
               <table className="admin-table">
                 <thead>
                   <tr>
+                    <th>S.No.</th>
                     <th>ID</th>
                     <th>Name</th>
                     <th>Email</th>
@@ -138,6 +142,7 @@ export default function AdminDashboard() {
                     >
                       {editingUser === user.id ? (
                         <>
+                          <td>{i + 1}</td>
                           <td>{user.id}</td>
                           <td>
                             <input className="input-field table-input" value={editForm.name}
@@ -168,6 +173,7 @@ export default function AdminDashboard() {
                         </>
                       ) : (
                         <>
+                          <td>{i + 1}</td>
                           <td>{user.id}</td>
                           <td className="user-name-cell">{user.name}</td>
                           <td className="user-email-cell">{user.email}</td>
