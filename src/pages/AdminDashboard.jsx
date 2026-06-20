@@ -123,7 +123,7 @@ export default function AdminDashboard() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>S.No.</th>
+                    <th>Sl.No.</th>
                     <th>ID</th>
                     <th>Name</th>
                     <th>Email</th>

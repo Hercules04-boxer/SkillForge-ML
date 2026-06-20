@@ -227,7 +227,7 @@ export default function InterviewSetup() {
                     onClick={() => setConfig({ ...config, mode: 'text' })}
                     style={{ flex: 1 }}
                   >
-                    Text Only
+                    Text
                   </button>
                 </div>
               </div>

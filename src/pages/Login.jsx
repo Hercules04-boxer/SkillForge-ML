@@ -47,8 +47,8 @@ export default function Login() {
           </div>
         </div>
 
-        <h1 className="auth-title">Welcome Back</h1>
-        <p className="auth-subtitle">Sign in to continue your interview prep</p>
+        <h1 className="auth-title">User Login</h1>
+        <p className="auth-subtitle">Log in to continue your interview prep</p>
 
         {error && (
           <motion.div
@@ -110,7 +110,7 @@ export default function Login() {
             {loading ? (
               <span className="btn-loading-spinner" />
             ) : (
-              <>Sign In <LogIn size={18} /></>
+              <>Log In <LogIn size={18} /></>
             )}
           </button>
         </form>
