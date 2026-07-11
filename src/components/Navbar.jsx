@@ -38,7 +38,10 @@ export default function Navbar() {
         {user ? (
           <>
             {!user.is_admin && (
-              <Link to="/interview" className="nav-link" onClick={() => setMenuOpen(false)}>Interview</Link>
+              <>
+                <Link to="/interview" className="nav-link" onClick={() => setMenuOpen(false)}>Interview</Link>
+                <Link to="/history" className="nav-link" onClick={() => setMenuOpen(false)}>History</Link>
+              </>
             )}
             <div className="nav-user">
               <User size={14} />

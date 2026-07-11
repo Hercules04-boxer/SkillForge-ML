@@ -10,6 +10,7 @@ import InterviewSetup from './pages/InterviewSetup'
 import InterviewLive from './pages/InterviewLive'
 import InterviewResults from './pages/InterviewResults'
 import AdminDashboard from './pages/AdminDashboard'
+import History from './pages/History'
 
 function App() {
   return (
@@ -30,6 +31,9 @@ function App() {
           } />
           <Route path="/interview/results" element={
             <ProtectedRoute><InterviewResults /></ProtectedRoute>
+          } />
+          <Route path="/history" element={
+            <ProtectedRoute><History /></ProtectedRoute>
           } />
           <Route path="/admin" element={
             <ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>

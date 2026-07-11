@@ -2,14 +2,17 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Trophy, BarChart3, ArrowRight, RotateCcw, ChevronDown, ChevronUp, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import './InterviewResults.css'
 
 export default function InterviewResults() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { results, config } = location.state || {}
   const [expandedIndex, setExpandedIndex] = useState(null)
   const [animatedScore, setAnimatedScore] = useState(0)
+  const [previousReports, setPreviousReports] = useState([])
 
   useEffect(() => {
     if (!results) {
@@ -17,8 +20,9 @@ export default function InterviewResults() {
       return
     }
 
-    // Save interview result
     const avgScore = results.reduce((sum, r) => sum + (r.evaluation?.score || 0), 0) / results.length
+
+    // Save interview result to backend
     fetch('/api/save-interview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -26,9 +30,58 @@ export default function InterviewResults() {
       body: JSON.stringify({
         interviewName: config?.interviewName || 'Interview',
         score: avgScore,
-        totalQuestions: results.length
+        totalQuestions: results.length,
+        questions: results,
+        config: config
       })
     }).catch(console.error)
+
+    // Save full interview result to user-specific localStorage
+    if (user) {
+      try {
+        const historyKey = `skillsforge_history_user_${user.id}`
+        const existingHistory = JSON.parse(localStorage.getItem(historyKey) || '[]')
+
+        // Avoid duplicates if page is re-rendered
+        const isDuplicate = existingHistory.some(h => 
+          h.interviewName === (config?.interviewName || 'Interview') &&
+          h.score === avgScore &&
+          JSON.stringify(h.questions) === JSON.stringify(results)
+        )
+
+        if (!isDuplicate) {
+          const newEntry = {
+            id: Date.now().toString(),
+            interviewName: config?.interviewName || 'Interview',
+            score: avgScore,
+            totalQuestions: results.length,
+            timestamp: new Date().toISOString(),
+            questions: results,
+            config: config
+          }
+          existingHistory.unshift(newEntry)
+          localStorage.setItem(historyKey, JSON.stringify(existingHistory))
+        }
+
+        const currentSignature = JSON.stringify({
+          interviewName: config?.interviewName || 'Interview',
+          score: avgScore,
+          questions: results
+        })
+
+        const filteredPrevious = (JSON.parse(localStorage.getItem(historyKey) || '[]') || [])
+          .filter(entry => JSON.stringify({
+            interviewName: entry.interviewName,
+            score: entry.score,
+            questions: entry.questions
+          }) !== currentSignature)
+          .slice(0, 3)
+
+        setPreviousReports(filteredPrevious)
+      } catch (err) {
+        console.error('Failed to save interview history locally:', err)
+      }
+    }
 
     // Animate score
     const target = Math.round(avgScore * 10)
@@ -44,7 +97,7 @@ export default function InterviewResults() {
     }, 20)
 
     return () => clearInterval(interval)
-  }, [results])
+  }, [results, user, config, navigate])
 
   if (!results) return null
 
@@ -184,6 +237,48 @@ export default function InterviewResults() {
           </div>
         </motion.div>
 
+        {previousReports.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            style={{ marginTop: '24px' }}
+          >
+            <h2 className="breakdown-title">
+              <BarChart3 size={20} /> Previous Reports & Answers
+            </h2>
+            <div className="breakdown-list">
+              {previousReports.map((entry, idx) => (
+                <motion.div
+                  key={entry.id || idx}
+                  className="breakdown-item glass-card"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.05 * idx }}
+                >
+                  <div className="breakdown-header">
+                    <div className="breakdown-left">
+                      <span className={`breakdown-score score-${entry.score >= 7 ? 'high' : entry.score >= 4 ? 'mid' : 'low'}`}>
+                        {entry.score?.toFixed(1) || '0.0'}/10
+                      </span>
+                      <span className="breakdown-question">{entry.interviewName}</span>
+                    </div>
+                  </div>
+                  <div className="breakdown-details" style={{ paddingTop: '12px' }}>
+                    {(entry.questions || []).slice(0, 2).map((item, qIdx) => (
+                      <div key={`${entry.id}-${qIdx}`} className="detail-section">
+                        <h4>Q{qIdx + 1}: {item.question}</h4>
+                        <p className="detail-answer">{item.transcription || 'No answer recorded'}</p>
+                        <p><strong>Feedback:</strong> {item.evaluation?.feedback || 'No feedback available'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Actions */}
         <div className="results-actions">
           <Link to="/interview">
@@ -191,9 +286,9 @@ export default function InterviewResults() {
               <RotateCcw size={18} /> New Interview
             </button>
           </Link>
-          <Link to="/">
+          <Link to="/history">
             <button className="btn btn-primary btn-lg">
-              Back to Home <ArrowRight size={18} />
+              View Full History <ArrowRight size={18} />
             </button>
           </Link>
         </div>

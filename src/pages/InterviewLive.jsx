@@ -51,6 +51,7 @@ export default function InterviewLive() {
         streamRef.current.getTracks().forEach(t => t.stop())
       }
       if (timerRef.current) clearInterval(timerRef.current)
+      window.speechSynthesis.cancel()
     }
   }, [])
 
@@ -201,27 +202,25 @@ export default function InterviewLive() {
     }
   }
 
-  const playQuestion = async () => {
-    setIsPlayingAudio(true)
-    try {
-      const res = await fetch('/api/generate-audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ text: questions[currentIndex] })
-      })
-      if (res.ok) {
-        const audioBlob = await res.blob()
-        const audio = new Audio(URL.createObjectURL(audioBlob))
-        audio.onended = () => setIsPlayingAudio(false)
-        audio.onerror = () => setIsPlayingAudio(false)
-        audio.play()
-      } else {
-        setIsPlayingAudio(false)
-      }
-    } catch {
-      setIsPlayingAudio(false)
+  const playQuestion = () => {
+    if (!('speechSynthesis' in window)) {
+      console.warn('Web Speech API not supported in this browser.')
+      return
     }
+    // Cancel any ongoing speech before starting
+    window.speechSynthesis.cancel()
+
+    const utterance = new SpeechSynthesisUtterance(questions[currentIndex])
+    utterance.rate = 0.95
+    utterance.pitch = 1
+    utterance.volume = 1
+
+    utterance.onstart = () => setIsPlayingAudio(true)
+    utterance.onend = () => setIsPlayingAudio(false)
+    utterance.onerror = () => setIsPlayingAudio(false)
+
+    setIsPlayingAudio(true)
+    window.speechSynthesis.speak(utterance)
   }
 
   if (!questions) return null

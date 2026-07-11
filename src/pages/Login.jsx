@@ -47,7 +47,7 @@ export default function Login() {
           </div>
         </div>
 
-        <h1 className="auth-title">User Login</h1>
+        <h1 className="auth-title">Login</h1>
         <p className="auth-subtitle">Log in to continue your interview prep</p>
 
         {error && (
@@ -110,7 +110,7 @@ export default function Login() {
             {loading ? (
               <span className="btn-loading-spinner" />
             ) : (
-              <>Log In <LogIn size={18} /></>
+              <>Sign In <LogIn size={18} /></>
             )}
           </button>
         </form>
