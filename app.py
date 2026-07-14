@@ -45,13 +45,14 @@ def create_table():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            phone TEXT,
-            email TEXT UNIQUE NOT NULL,
+            phone TEXT NOT NULL,
+            email TEXT NOT NULL,
             password TEXT NOT NULL,
-            background TEXT
+            background TEXT,
+            CONSTRAINT uq_email UNIQUE (email),
+            CONSTRAINT uq_phone UNIQUE (phone)
         )
     """)
-    conn.execute("""CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)""")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS interviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -130,17 +131,27 @@ def signup():
         return jsonify({"error": "Password must be at least 6 characters."}), 400
 
     hashed = generate_password_hash(password)
+    conn = get_db_connection()
     try:
-        conn = get_db_connection()
+        # Explicit duplicate checks (works even on DBs without retroactive UNIQUE constraint)
+        if conn.execute("SELECT 1 FROM users WHERE email = ?", (email,)).fetchone():
+            return jsonify({"error": "An account with this email already exists."}), 409
+        if phone and conn.execute("SELECT 1 FROM users WHERE phone = ?", (phone,)).fetchone():
+            return jsonify({"error": "An account with this phone number already exists."}), 409
+
         conn.execute(
             "INSERT INTO users (name, phone, email, password, background) VALUES (?, ?, ?, ?, ?)",
             (name, phone, email, hashed, background)
         )
         conn.commit()
-        conn.close()
         return jsonify({"message": "Account created successfully! Please log in."}), 201
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError as e:
+        err = str(e).lower()
+        if "phone" in err:
+            return jsonify({"error": "An account with this phone number already exists."}), 409
         return jsonify({"error": "An account with this email already exists."}), 409
+    finally:
+        conn.close()
 
 
 # -------- Login --------
@@ -525,7 +536,10 @@ def edit_user(user_id):
         """, (name, phone, email, password, background, user_id))
         conn.commit()
         return jsonify({"message": "User updated successfully."})
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError as e:
+        err = str(e).lower()
+        if "phone" in err:
+            return jsonify({"error": "Phone number already exists!"}), 409
         return jsonify({"error": "Email already exists!"}), 409
     finally:
         conn.close()
